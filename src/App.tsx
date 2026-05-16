@@ -4,6 +4,8 @@ import {
   BookOpen,
   Calendar,
   Download,
+  Eye,
+  EyeOff,
   FileImage,
   FileSpreadsheet,
   FileType,
@@ -81,6 +83,14 @@ function sortTerms(terms: string[]): string[] {
   });
 }
 
+function flowsheetUsesGradeFormatting(
+  status: Course["status"],
+  showGrades: boolean,
+): boolean {
+  if (showGrades) return true;
+  return status === "in-progress" || status === "planned";
+}
+
 export default function App() {
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem("gpame_data");
@@ -110,12 +120,23 @@ export default function App() {
   }, []);
 
   const [flowsheetExporting, setFlowsheetExporting] = useState(false);
+  const [showFlowsheetGrades, setShowFlowsheetGrades] = useState(() => {
+    const saved = localStorage.getItem("gpame_show_flowsheet_grades");
+    return saved !== "false";
+  });
   const flowsheetCaptureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.className = theme;
     localStorage.setItem("gpame_theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "gpame_show_flowsheet_grades",
+      String(showFlowsheetGrades),
+    );
+  }, [showFlowsheetGrades]);
 
   const currentYear = new Date().getFullYear();
   const [newPlan, setNewPlan] = useState({
@@ -391,7 +412,11 @@ export default function App() {
     }
     setFlowsheetExporting(true);
     try {
-      await downloadFlowsheetExcel(flowsheetTermsSorted, flowsheetByTerm);
+      await downloadFlowsheetExcel(
+        flowsheetTermsSorted,
+        flowsheetByTerm,
+        showFlowsheetGrades,
+      );
     } catch (e) {
       console.error(e);
       alert("Could not create Excel file.");
@@ -774,7 +799,24 @@ export default function App() {
               <h2>
                 <BookOpen className="icon-green" /> Course Flowsheet
               </h2>
-              <div className="flowsheet-export-actions">
+              <div className="flowsheet-toolbar">
+                <button
+                  type="button"
+                  className={`btn btn-secondary flowsheet-grade-toggle ${
+                    showFlowsheetGrades ? "active" : ""
+                  }`}
+                  title={showFlowsheetGrades
+                    ? "Hide grades and pass/fail styling"
+                    : "Show grades and pass/fail styling"}
+                  onClick={() => setShowFlowsheetGrades((v) => !v)}
+                  aria-pressed={showFlowsheetGrades}
+                >
+                  {showFlowsheetGrades
+                    ? <EyeOff size={16} />
+                    : <Eye size={16} />}
+                  {showFlowsheetGrades ? "Hide grades" : "Show grades"}
+                </button>
+                <div className="flowsheet-export-actions">
                 <button
                   type="button"
                   className="btn btn-secondary flowsheet-export-btn"
@@ -805,18 +847,28 @@ export default function App() {
                 >
                   <FileImage size={16} /> Image
                 </button>
+                </div>
               </div>
             </div>
-            <div ref={flowsheetCaptureRef} className="flowsheet-capture-area">
+            <div
+              ref={flowsheetCaptureRef}
+              className={`flowsheet-capture-area ${
+                showFlowsheetGrades ? "" : "flowsheet-grades-hidden"
+              }`}
+            >
               <div className="legend">
-                <div className="legend-item">
-                  <span className="indicator indicator-taken"></span> Taken
-                </div>
+                {showFlowsheetGrades && (
+                  <>
+                    <div className="legend-item">
+                      <span className="indicator indicator-taken"></span> Taken
+                    </div>
+                    <div className="legend-item">
+                      <span className="indicator indicator-failed"></span> Failed
+                    </div>
+                  </>
+                )}
                 <div className="legend-item">
                   <span className="indicator indicator-ip"></span> In Progress
-                </div>
-                <div className="legend-item">
-                  <span className="indicator indicator-failed"></span> Failed
                 </div>
                 <div className="legend-item">
                   <span className="indicator indicator-planned"></span> Planned
@@ -842,17 +894,27 @@ export default function App() {
                           </div>
                         </div>
                         <div className="flowsheet-col-cards">
-                          {flowsheetByTerm[term].map((course, i) => (
+                          {flowsheetByTerm[term].map((course, i) => {
+                            const useStatusStyle = flowsheetUsesGradeFormatting(
+                              course.status,
+                              showFlowsheetGrades,
+                            );
+                            return (
                             <div
                               key={`${term}-${i}`}
-                              className={`flowsheet-card fcard-${course.status}`}
+                              className={[
+                                "flowsheet-card",
+                                useStatusStyle ? `fcard-${course.status}` : "",
+                              ].filter(Boolean).join(" ")}
                             >
                               <div className="fcard-top">
                                 <span className="fcard-id">{course.id}</span>
-                                <span
-                                  className={`fcard-status-dot dot-${course.status}`}
-                                >
-                                </span>
+                                {useStatusStyle && (
+                                  <span
+                                    className={`fcard-status-dot dot-${course.status}`}
+                                  >
+                                  </span>
+                                )}
                               </div>
                               <div className="fcard-title">{course.title}</div>
                               <div className="fcard-bottom">
@@ -861,14 +923,15 @@ export default function App() {
                                     ? `${course.units} CR`
                                     : ""}
                                 </span>
-                                {course.grade && (
+                                {showFlowsheetGrades && course.grade && (
                                   <span className="fcard-grade">
                                     {course.grade}
                                   </span>
                                 )}
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}

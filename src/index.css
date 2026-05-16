@@ -496,6 +496,21 @@ body.light .flowsheet-col { border-color: rgba(16,185,129,0.3); background: rgba
   margin-bottom: 16px;
 }
 .flowsheet-section-heading h2 { margin-bottom: 0; }
+.flowsheet-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.flowsheet-grade-toggle.active {
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.12);
+}
+body.light .flowsheet-grade-toggle.active {
+  border-color: rgba(5, 150, 105, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+}
 .flowsheet-export-actions {
   display: flex;
   flex-wrap: wrap;

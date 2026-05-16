@@ -38,9 +38,21 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function usesGradeFormatting(
+  status: FlowsheetCourse["status"],
+  showGrades: boolean,
+): boolean {
+  if (showGrades) return true;
+  return status === "in-progress" || status === "planned";
+}
+
+const NEUTRAL_FILL = "FFF8FAFC";
+const NEUTRAL_BORDER = "FFCBD5E1";
+
 export async function downloadFlowsheetExcel(
   termsSorted: string[],
   byTerm: Record<string, FlowsheetCourse[]>,
+  showGrades = true,
 ): Promise<void> {
   const ExcelJS = (await import("exceljs")).default;
 
@@ -63,12 +75,9 @@ export async function downloadFlowsheetExcel(
     sheet.getColumn(i + 1).width = 28;
   });
 
-  const legendParts = [
-    "Taken",
-    "In Progress",
-    "Failed",
-    "Planned",
-  ];
+  const legendParts = showGrades
+    ? ["Taken", "In Progress", "Failed", "Planned"]
+    : ["In Progress", "Planned"];
   sheet.mergeCells(1, 1, 1, n);
   const legendCell = sheet.getCell(1, 1);
   legendCell.value = `Legend: ${legendParts.join(" · ")}`;
@@ -129,16 +138,19 @@ export async function downloadFlowsheetExcel(
         return;
       }
 
-      const b = STATUS_BORDER[course.status];
-      const borderColor = { argb: b };
+      const styled = usesGradeFormatting(course.status, showGrades);
+      const borderArgb = styled
+        ? STATUS_BORDER[course.status]
+        : NEUTRAL_BORDER;
+      const borderColor = { argb: borderArgb };
       cell.border = {
-        top: { style: "medium", color: borderColor },
-        left: { style: "medium", color: borderColor },
-        bottom: { style: "medium", color: borderColor },
-        right: { style: "medium", color: borderColor },
+        top: { style: styled ? "medium" : "thin", color: borderColor },
+        left: { style: styled ? "medium" : "thin", color: borderColor },
+        bottom: { style: styled ? "medium" : "thin", color: borderColor },
+        right: { style: styled ? "medium" : "thin", color: borderColor },
       };
 
-      const gradePart = course.grade
+      const gradePart = showGrades && course.grade
         ? [
             { text: "  ", font: { size: 10 } },
             {
@@ -176,7 +188,9 @@ export async function downloadFlowsheetExcel(
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: STATUS_FILL[course.status] },
+        fgColor: {
+          argb: styled ? STATUS_FILL[course.status] : NEUTRAL_FILL,
+        },
       };
       cell.alignment = { vertical: "top", horizontal: "left", wrapText: true };
     });
