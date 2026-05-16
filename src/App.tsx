@@ -4,7 +4,11 @@ import {
   BookOpen,
   Calendar,
   Download,
+  FileImage,
+  FileSpreadsheet,
+  FileType,
   Moon,
+  Shield,
   Sun,
   Trash2,
   Upload,
@@ -14,6 +18,12 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
+import {
+  captureFlowsheetElement,
+  downloadFlowsheetExcel,
+  downloadFlowsheetPdf,
+  downloadFlowsheetPng,
+} from "./flowsheetExport";
 import { extractDataFromText } from "./parser";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -81,23 +91,8 @@ export default function App() {
     return (localStorage.getItem("gpame_theme") as "light" | "dark") || "dark";
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const [viewCount, setViewCount] = useState<number | null>(null);
-  const [uploadCount, setUploadCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Increment page views
-    fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-views/up")
-      .then((res) => res.json())
-      .then((data) => setViewCount(data.data.up_count))
-      .catch(console.error);
-
-    // Fetch transcript uploads (get current count without incrementing)
-    fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts")
-      .then((res) => res.json())
-      .then((data) => setUploadCount(data.data.up_count))
-      .catch(() => setUploadCount(0));
-  }, []);
+  const [flowsheetExporting, setFlowsheetExporting] = useState(false);
+  const flowsheetCaptureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.className = theme;
@@ -172,29 +167,12 @@ export default function App() {
             ...courses,
           ],
         }));
-        
-        fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts/up")
-          .then((res) => res.json())
-          .then((data) => setUploadCount(data.data.up_count))
-          .catch(console.error);
       } catch (err) {
         console.error(err);
         alert("Failed to parse PDF.");
       }
     };
     reader.readAsArrayBuffer(file);
-  };
-
-  // ── GPA ─────────────────────────────────────────────────────────────────────
-  const calculateGPA = () => {
-    let pts = 0, units = 0;
-    state.courses.forEach((c) => {
-      if (c.grade in GRADE_POINTS) {
-        pts += GRADE_POINTS[c.grade] * c.units;
-        units += c.units;
-      }
-    });
-    return units > 0 ? (pts / units).toFixed(3) : "0.000";
   };
 
   // ── Planner actions ─────────────────────────────────────────────────────────
@@ -340,8 +318,74 @@ export default function App() {
     c.status === "planned" || c.status === "in-progress"
   );
 
+  let gpaQualityPoints = 0;
+  let gpaGradedCredits = 0;
+  state.courses.forEach((c) => {
+    if (c.grade in GRADE_POINTS) {
+      gpaQualityPoints += GRADE_POINTS[c.grade] * c.units;
+      gpaGradedCredits += c.units;
+    }
+  });
+  const gpaRoundedQp = Math.round(gpaQualityPoints * 100) / 100;
+  const gpaStats = {
+    qualityPointsStr: gpaGradedCredits <= 0
+      ? "0.00"
+      : gpaRoundedQp.toFixed(2),
+    creditsStr: gpaGradedCredits <= 0
+      ? "0"
+      : gpaGradedCredits % 1 === 0
+      ? String(gpaGradedCredits)
+      : gpaGradedCredits.toFixed(1),
+    gpaStr: gpaGradedCredits > 0
+      ? (gpaQualityPoints / gpaGradedCredits).toFixed(3)
+      : "0.000",
+  };
+
+  const runVisualFlowsheetExport = async (kind: "pdf" | "png") => {
+    if (flowsheetTermsSorted.length === 0) {
+      alert("Add courses to your flowsheet before exporting.");
+      return;
+    }
+    const el = flowsheetCaptureRef.current;
+    if (!el) return;
+    setFlowsheetExporting(true);
+    try {
+      const canvas = await captureFlowsheetElement(el, theme);
+      if (kind === "pdf") await downloadFlowsheetPdf(canvas);
+      else downloadFlowsheetPng(canvas);
+    } catch (e) {
+      console.error(e);
+      alert("Could not create export. Try again or use Excel export.");
+    } finally {
+      setFlowsheetExporting(false);
+    }
+  };
+
+  const exportFlowsheetExcel = async () => {
+    if (flowsheetTermsSorted.length === 0) {
+      alert("Add courses to your flowsheet before exporting.");
+      return;
+    }
+    setFlowsheetExporting(true);
+    try {
+      await downloadFlowsheetExcel(flowsheetTermsSorted, flowsheetByTerm);
+    } catch (e) {
+      console.error(e);
+      alert("Could not create Excel file.");
+    } finally {
+      setFlowsheetExporting(false);
+    }
+  };
+
   return (
     <div className="app-container">
+      <div className="privacy-banner" role="status">
+        <Shield className="privacy-banner-icon" size={18} strokeWidth={2.5} />
+        <p className="privacy-banner-text">
+          <strong>100% local.</strong>{" "}
+          No data of yours is ever sent out of this device.
+        </p>
+      </div>
       {/* Navbar */}
       <nav className="navbar">
         <div className="nav-content">
@@ -455,7 +499,19 @@ export default function App() {
           <section className="glass-panel gpa-card">
             <div className="gpa-glow"></div>
             <h2 className="gpa-title">Cumulative GPA</h2>
-            <div className="gpa-value">{calculateGPA()}</div>
+            <div className="gpa-value">{gpaStats.gpaStr}</div>
+            <div className="gpa-breakdown" aria-label="GPA breakdown">
+              <div className="gpa-breakdown-row gpa-breakdown-header">
+                <span>Quality Points</span>
+                <span>Credits</span>
+                <span>GPA</span>
+              </div>
+              <div className="gpa-breakdown-row gpa-breakdown-values">
+                <span>{gpaStats.qualityPointsStr}</span>
+                <span>{gpaStats.creditsStr}</span>
+                <span>{gpaStats.gpaStr}</span>
+              </div>
+            </div>
             <p className="gpa-subtitle">
               Based on{" "}
               {state.courses.filter((c) => c.grade in GRADE_POINTS).length}{" "}
@@ -691,73 +747,111 @@ export default function App() {
 
           {/* ── Course Flowsheet ── */}
           <section className="glass-panel flowsheet-section">
-            <h2>
-              <BookOpen className="icon-green" /> Course Flowsheet
-            </h2>
-            <div className="legend">
-              <div className="legend-item">
-                <span className="indicator indicator-taken"></span> Taken
-              </div>
-              <div className="legend-item">
-                <span className="indicator indicator-ip"></span> In Progress
-              </div>
-              <div className="legend-item">
-                <span className="indicator indicator-failed"></span> Failed
-              </div>
-              <div className="legend-item">
-                <span className="indicator indicator-planned"></span> Planned
+            <div className="flowsheet-section-heading">
+              <h2>
+                <BookOpen className="icon-green" /> Course Flowsheet
+              </h2>
+              <div className="flowsheet-export-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary flowsheet-export-btn"
+                  title="Download formatted Excel"
+                  disabled={flowsheetExporting ||
+                    flowsheetTermsSorted.length === 0}
+                  onClick={() => void exportFlowsheetExcel()}
+                >
+                  <FileSpreadsheet size={16} /> Excel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary flowsheet-export-btn"
+                  title="Download as PDF"
+                  disabled={flowsheetExporting ||
+                    flowsheetTermsSorted.length === 0}
+                  onClick={() => void runVisualFlowsheetExport("pdf")}
+                >
+                  <FileType size={16} /> PDF
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary flowsheet-export-btn"
+                  title="Download as PNG image"
+                  disabled={flowsheetExporting ||
+                    flowsheetTermsSorted.length === 0}
+                  onClick={() => void runVisualFlowsheetExport("png")}
+                >
+                  <FileImage size={16} /> Image
+                </button>
               </div>
             </div>
-
-            {flowsheetTermsSorted.length === 0
-              ? (
-                <div className="empty-state flowsheet-empty">
-                  <BookOpen size={48} className="empty-icon" />
-                  <p>Upload your transcript to see your flowsheet.</p>
+            <div ref={flowsheetCaptureRef} className="flowsheet-capture-area">
+              <div className="legend">
+                <div className="legend-item">
+                  <span className="indicator indicator-taken"></span> Taken
                 </div>
-              )
-              : (
-                <div className="flowsheet-columns">
-                  {flowsheetTermsSorted.map((term) => (
-                    <div key={term} className="flowsheet-col">
-                      <div className="flowsheet-col-header">
-                        <div className="flowsheet-col-term">{term}</div>
-                        <div className="flowsheet-col-units">
-                          Units: {flowsheetByTerm[term].reduce((s, c) =>
-                            s + c.units, 0)}
+                <div className="legend-item">
+                  <span className="indicator indicator-ip"></span> In Progress
+                </div>
+                <div className="legend-item">
+                  <span className="indicator indicator-failed"></span> Failed
+                </div>
+                <div className="legend-item">
+                  <span className="indicator indicator-planned"></span> Planned
+                </div>
+              </div>
+
+              {flowsheetTermsSorted.length === 0
+                ? (
+                  <div className="empty-state flowsheet-empty">
+                    <BookOpen size={48} className="empty-icon" />
+                    <p>Upload your transcript to see your flowsheet.</p>
+                  </div>
+                )
+                : (
+                  <div className="flowsheet-columns">
+                    {flowsheetTermsSorted.map((term) => (
+                      <div key={term} className="flowsheet-col">
+                        <div className="flowsheet-col-header">
+                          <div className="flowsheet-col-term">{term}</div>
+                          <div className="flowsheet-col-units">
+                            Units: {flowsheetByTerm[term].reduce((s, c) =>
+                              s + c.units, 0)}
+                          </div>
+                        </div>
+                        <div className="flowsheet-col-cards">
+                          {flowsheetByTerm[term].map((course, i) => (
+                            <div
+                              key={`${term}-${i}`}
+                              className={`flowsheet-card fcard-${course.status}`}
+                            >
+                              <div className="fcard-top">
+                                <span className="fcard-id">{course.id}</span>
+                                <span
+                                  className={`fcard-status-dot dot-${course.status}`}
+                                >
+                                </span>
+                              </div>
+                              <div className="fcard-title">{course.title}</div>
+                              <div className="fcard-bottom">
+                                <span className="fcard-units">
+                                  {course.units > 0
+                                    ? `${course.units} CR`
+                                    : ""}
+                                </span>
+                                {course.grade && (
+                                  <span className="fcard-grade">
+                                    {course.grade}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                      <div className="flowsheet-col-cards">
-                        {flowsheetByTerm[term].map((course, i) => (
-                          <div
-                            key={`${term}-${i}`}
-                            className={`flowsheet-card fcard-${course.status}`}
-                          >
-                            <div className="fcard-top">
-                              <span className="fcard-id">{course.id}</span>
-                              <span
-                                className={`fcard-status-dot dot-${course.status}`}
-                              >
-                              </span>
-                            </div>
-                            <div className="fcard-title">{course.title}</div>
-                            <div className="fcard-bottom">
-                              <span className="fcard-units">
-                                {course.units > 0 ? `${course.units} CR` : ""}
-                              </span>
-                              {course.grade && (
-                                <span className="fcard-grade">
-                                  {course.grade}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+            </div>
           </section>
         </div>
       </main>
@@ -827,10 +921,6 @@ export default function App() {
           <a href="https://github.com/ShivanshShalabh" target="_blank" rel="noopener noreferrer">Shivansh Shalabh</a> |{" "}
           <a href="https://www.linkedin.com/in/shivansh-shalabh/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </p>
-        <div style={{ marginTop: "12px", fontSize: "0.8rem", color: "var(--text-muted)", opacity: 0.8, display: "flex", justifyContent: "center", gap: "16px" }}>
-          <span>👁️ {viewCount !== null ? viewCount.toLocaleString() : "..."} Views</span>
-          <span>📄 {uploadCount !== null ? uploadCount.toLocaleString() : "..."} Transcripts Parsed</span>
-        </div>
       </footer>
     </div>
   );

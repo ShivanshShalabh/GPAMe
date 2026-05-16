@@ -63,6 +63,46 @@ body.light .btn-secondary:hover { background: rgba(0,0,0,0.1); }
 
 .app-container { display: flex; flex-direction: column; min-height: 100vh; }
 
+/* ─── Privacy banner (local-first) ─────────────────────────────────────────── */
+.privacy-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  text-align: center;
+  padding: 12px 20px;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.18),
+    rgba(14, 165, 233, 0.14)
+  );
+  border-bottom: 1px solid rgba(16, 185, 129, 0.35);
+  color: #a7f3d0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.privacy-banner-icon {
+  flex-shrink: 0;
+  color: #34d399;
+}
+.privacy-banner-text { max-width: 52rem; margin: 0; }
+.privacy-banner strong {
+  color: #6ee7b7;
+  font-weight: 700;
+}
+body.light .privacy-banner {
+  color: #065f46;
+  background: linear-gradient(
+    90deg,
+    rgba(16, 185, 129, 0.14),
+    rgba(14, 165, 233, 0.1)
+  );
+  border-bottom-color: rgba(5, 150, 105, 0.35);
+}
+body.light .privacy-banner-icon { color: #059669; }
+body.light .privacy-banner strong { color: #047857; }
+
 /* ─── Navbar ─────────────────────────────────────────────────────────────── */
 .navbar {
   border-bottom: 1px solid var(--border-color);
@@ -226,7 +266,32 @@ body.light .disclaimer-text { color: #92400e; }
   background: var(--primary-gradient);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1;
 }
-.gpa-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-top: 12px; }
+.gpa-subtitle { font-size: 0.875rem; color: var(--text-muted); margin-top: 16px; }
+.gpa-breakdown {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+}
+.gpa-breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+.gpa-breakdown-header {
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.gpa-breakdown-values {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
 
 /* ─── GPA Calculator ─────────────────────────────────────────────────────── */
 .section-hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
@@ -421,6 +486,35 @@ body.light .fcard-title { color: #475569; }
 body.light .fcard-grade { color: #059669; }
 body.light .flowsheet-col-term { color: #059669; }
 body.light .flowsheet-col { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
+
+.flowsheet-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.flowsheet-section-heading h2 { margin-bottom: 0; }
+.flowsheet-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.flowsheet-export-btn {
+  padding: 7px 12px !important;
+  font-size: 0.82rem !important;
+}
+.flowsheet-capture-area {
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(18, 18, 22, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+body.light .flowsheet-capture-area {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+}
 
 /* ─── Legend ─────────────────────────────────────────────────────────────── */
 .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; font-size: 0.8rem; }
