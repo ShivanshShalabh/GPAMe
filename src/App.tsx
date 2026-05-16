@@ -91,6 +91,24 @@ export default function App() {
     return (localStorage.getItem("gpame_theme") as "light" | "dark") || "dark";
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [viewCount, setViewCount] = useState<number | null>(null);
+  const [uploadCount, setUploadCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    // Increment page views
+    fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-views/up")
+      .then((res) => res.json())
+      .then((data) => setViewCount(data.data.up_count))
+      .catch(console.error);
+
+    // Fetch transcript uploads (get current count without incrementing)
+    fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts")
+      .then((res) => res.json())
+      .then((data) => setUploadCount(data.data.up_count))
+      .catch(() => setUploadCount(0));
+  }, []);
+
   const [flowsheetExporting, setFlowsheetExporting] = useState(false);
   const flowsheetCaptureRef = useRef<HTMLDivElement>(null);
 
@@ -167,6 +185,11 @@ export default function App() {
             ...courses,
           ],
         }));
+
+        fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts/up")
+          .then((res) => res.json())
+          .then((data) => setUploadCount(data.data.up_count))
+          .catch(console.error);
       } catch (err) {
         console.error(err);
         alert("Failed to parse PDF.");
@@ -921,6 +944,10 @@ export default function App() {
           <a href="https://github.com/ShivanshShalabh" target="_blank" rel="noopener noreferrer">Shivansh Shalabh</a> |{" "}
           <a href="https://www.linkedin.com/in/shivansh-shalabh/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </p>
+        <div style={{ marginTop: "12px", fontSize: "0.8rem", color: "var(--text-muted)", opacity: 0.8, display: "flex", justifyContent: "center", gap: "16px" }}>
+          <span>👁️ {viewCount !== null ? viewCount.toLocaleString() : "..."} Views</span>
+          <span>📄 {uploadCount !== null ? uploadCount.toLocaleString() : "..."} Transcripts Parsed</span>
+        </div>
       </footer>
     </div>
   );
