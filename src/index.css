@@ -240,6 +240,7 @@ body.light .disclaimer-text { color: #92400e; }
 .icon-sky { color: #0ea5e9; }
 .icon-blue   { color: #3b82f6; }
 .icon-green  { color: #10b981; }
+.icon-amber  { color: #f59e0b; }
 
 /* ─── Upload ─────────────────────────────────────────────────────────────── */
 .drop-zone {
@@ -322,6 +323,238 @@ body.light .disclaimer-text { color: #92400e; }
   transition: border-color 0.2s;
 }
 .input-field:focus { border-color: #0ea5e9; }
+
+/* ─── Honors Experience Tracker ──────────────────────────────────────────── */
+.honors-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.honors-section-header h2 { margin-bottom: 0 !important; flex: 1; }
+.honors-enable-toggle {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+.honors-enable-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.honors-enable-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+.honors-enable-slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: #94a3b8;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+.honors-enable-toggle input:checked + .honors-enable-slider {
+  background: rgba(245, 158, 11, 0.35);
+}
+.honors-enable-toggle input:checked + .honors-enable-slider::before {
+  transform: translateX(20px);
+  background: #fbbf24;
+}
+body.light .honors-enable-slider { background: rgba(0, 0, 0, 0.12); }
+.honors-disabled-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.honors-credits-row { margin-bottom: 16px; }
+.honors-field-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.honors-credits-input { max-width: 120px; }
+.honors-progress-wrap { margin-bottom: 18px; }
+.honors-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.honors-progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+body.light .honors-progress-bar { background: rgba(0, 0, 0, 0.08); }
+.honors-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.honors-subheading {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 10px;
+}
+.honors-flagged-list { margin-bottom: 18px; }
+.honors-empty-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.honors-flagged-item {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 8px;
+}
+body.light .honors-flagged-item {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+.honors-flagged-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.honors-flagged-id { font-weight: 700; font-size: 0.85rem; }
+.honors-flagged-units {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+body.light .honors-flagged-units { color: #d97706; }
+.honors-flagged-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.honors-status-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.tag-taken { background: var(--status-taken-bg); color: #6ee7b7; }
+.tag-in-progress { background: var(--status-ip-bg); color: #93c5fd; }
+.tag-planned { background: var(--status-planned-bg); color: #38bdf8; }
+body.light .tag-taken { color: #059669; }
+body.light .tag-in-progress { color: #2563eb; }
+body.light .tag-planned { color: #0284c7; }
+.honors-petition-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.honors-petition-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: -4px;
+}
+.honors-petition-credits-row {
+  display: flex;
+  gap: 10px;
+}
+.honors-petition-credits-row .input-field { flex: 1; }
+.honors-petition-credits-row .btn { flex-shrink: 0; }
+.honors-petition-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.honors-petition-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+.honors-petition-desc {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.honors-petition-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.honors-remaining {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.honors-remaining-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.honors-remaining-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+body.light .honors-remaining-value { color: #d97706; }
+
+.fcard-honors {
+  box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.45);
+}
+.fcard-honors-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fbbf24;
+  cursor: pointer;
+  user-select: none;
+}
+body.light .fcard-honors-check { color: #d97706; }
+.fcard-honors-check input {
+  width: 14px;
+  height: 14px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
 
 /* ─── Planned Courses Section ────────────────────────────────────────────── */
 .planned-section { overflow: visible; }

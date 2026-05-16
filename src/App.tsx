@@ -18,6 +18,7 @@ import {
   X,
   Menu,
   AlertTriangle,
+  Award,
 } from "lucide-react";
 import * as pdfjsLib from "pdfjs-dist";
 import {
@@ -39,13 +40,38 @@ interface Course {
   units: number;
   status: "taken" | "in-progress" | "planned" | "failed";
   isVariable?: boolean;
+  isHonors?: boolean;
+}
+
+interface HonorsPetition {
+  id: string;
+  description: string;
+  credits: number;
 }
 
 interface AppState {
   courses: Course[];
+  honorsTrackerEnabled?: boolean;
+  honorsCreditsRequired?: number;
+  honorsPetitions?: HonorsPetition[];
 }
 
 const DEFAULT_STATE: AppState = { courses: [] };
+
+const DEFAULT_HONORS_CREDITS_REQUIRED = 21;
+
+function courseCountsTowardHonors(c: Course): boolean {
+  return c.status === "taken" ||
+    c.status === "in-progress" ||
+    c.status === "planned";
+}
+
+function honorsStatusLabel(status: Course["status"]): string {
+  if (status === "taken") return "Taken";
+  if (status === "in-progress") return "In Progress";
+  if (status === "planned") return "Planned";
+  return status;
+}
 
 const GRADE_POINTS: Record<string, number> = {
   "A": 4.0,
@@ -149,6 +175,10 @@ export default function App() {
   });
   const [courseOptions, setCourseOptions] = useState<any[]>([]);
   const [courseSearch, setCourseSearch] = useState("");
+  const [newPetition, setNewPetition] = useState({
+    description: "",
+    credits: 3,
+  });
 
   // Move-course modal state
   const [movingCourse, setMovingCourse] = useState<Course | null>(null);
@@ -279,6 +309,56 @@ export default function App() {
     }));
   };
 
+  const toggleCourseHonors = (term: string, id: string) => {
+    setState((prev) => ({
+      ...prev,
+      courses: prev.courses.map((c) =>
+        (c.term === term && c.id === id)
+          ? { ...c, isHonors: !c.isHonors }
+          : c
+      ),
+    }));
+  };
+
+  const setHonorsTrackerEnabled = (enabled: boolean) => {
+    setState((prev) => ({ ...prev, honorsTrackerEnabled: enabled }));
+  };
+
+  const setHonorsCreditsRequired = (credits: number) => {
+    setState((prev) => ({
+      ...prev,
+      honorsCreditsRequired: Number.isFinite(credits) && credits >= 0
+        ? credits
+        : DEFAULT_HONORS_CREDITS_REQUIRED,
+    }));
+  };
+
+  const addHonorsPetition = (e: React.FormEvent) => {
+    e.preventDefault();
+    const description = newPetition.description.trim();
+    const credits = parseFloat(String(newPetition.credits));
+    if (!description || !Number.isFinite(credits) || credits <= 0) return;
+    setState((prev) => ({
+      ...prev,
+      honorsPetitions: [
+        ...(prev.honorsPetitions ?? []),
+        {
+          id: `petition-${Date.now()}`,
+          description,
+          credits,
+        },
+      ],
+    }));
+    setNewPetition({ description: "", credits: 3 });
+  };
+
+  const removeHonorsPetition = (id: string) => {
+    setState((prev) => ({
+      ...prev,
+      honorsPetitions: (prev.honorsPetitions ?? []).filter((p) => p.id !== id),
+    }));
+  };
+
   // ── Drag-and-drop for planned course flowsheet ──────────────────────────────
   const handleDragStart = (course: Course) => {
     dragCourse.current = course;
@@ -384,6 +464,34 @@ export default function App() {
       ? (gpaQualityPoints / gpaGradedCredits).toFixed(3)
       : "0.000",
   };
+
+  const honorsTrackerEnabled = state.honorsTrackerEnabled ?? false;
+  const honorsCreditsRequired = state.honorsCreditsRequired ??
+    DEFAULT_HONORS_CREDITS_REQUIRED;
+  const honorsPetitions = state.honorsPetitions ?? [];
+  const honorsFlaggedCourses = state.courses
+    .filter((c) => c.isHonors && courseCountsTowardHonors(c))
+    .sort((a, b) => {
+      const td = sortTerms([a.term, b.term]);
+      if (a.term !== b.term) return td.indexOf(a.term) - td.indexOf(b.term);
+      return a.id.localeCompare(b.id);
+    });
+  const honorsCourseCredits = honorsFlaggedCourses.reduce(
+    (s, c) => s + c.units,
+    0,
+  );
+  const honorsPetitionCredits = honorsPetitions.reduce(
+    (s, p) => s + p.credits,
+    0,
+  );
+  const honorsCreditsEarned = honorsCourseCredits + honorsPetitionCredits;
+  const honorsRemaining = Math.max(
+    0,
+    honorsCreditsRequired - honorsCreditsEarned,
+  );
+  const honorsProgressPct = honorsCreditsRequired > 0
+    ? Math.min(100, (honorsCreditsEarned / honorsCreditsRequired) * 100)
+    : 0;
 
   const runVisualFlowsheetExport = async (kind: "pdf" | "png") => {
     if (flowsheetTermsSorted.length === 0) {
@@ -720,6 +828,175 @@ export default function App() {
               </button>
             </form>
           </section>
+
+          {/* Honors Experience Tracker */}
+          <section className="glass-panel honors-section">
+            <div className="honors-section-header">
+              <h2>
+                <Award size={20} className="icon-amber" /> Honors Experience Tracker
+              </h2>
+              <label className="honors-enable-toggle" title="Enable honors tracking on flowsheet">
+                <input
+                  type="checkbox"
+                  checked={honorsTrackerEnabled}
+                  onChange={(e) => setHonorsTrackerEnabled(e.target.checked)}
+                />
+                <span className="honors-enable-slider" />
+              </label>
+            </div>
+            {honorsTrackerEnabled
+              ? (
+                <>
+                  <p className="section-hint">
+                    Flag courses on the flowsheet. Taken, in-progress, and planned
+                    courses count toward honors experience.
+                  </p>
+                  <div className="honors-credits-row">
+                    <label className="honors-field-label" htmlFor="honors-credits-required">
+                      Credits to satisfy
+                    </label>
+                    <input
+                      id="honors-credits-required"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      className="input-field honors-credits-input"
+                      value={honorsCreditsRequired}
+                      onChange={(e) =>
+                        setHonorsCreditsRequired(parseFloat(e.target.value))}
+                    />
+                  </div>
+                  <div className="honors-progress-wrap">
+                    <div className="honors-progress-labels">
+                      <span>{honorsCreditsEarned % 1 === 0
+                        ? honorsCreditsEarned
+                        : honorsCreditsEarned.toFixed(1)}{" "}
+                        / {honorsCreditsRequired} credits</span>
+                      <span>{Math.round(honorsProgressPct)}%</span>
+                    </div>
+                    <div className="honors-progress-bar">
+                      <div
+                        className="honors-progress-fill"
+                        style={{ width: `${honorsProgressPct}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="honors-flagged-list">
+                    <h3 className="honors-subheading">Flagged courses</h3>
+                    {honorsFlaggedCourses.length === 0
+                      ? (
+                        <p className="honors-empty-hint">
+                          No courses flagged yet. Use the honors checkbox on the
+                          flowsheet.
+                        </p>
+                      )
+                      : (
+                        honorsFlaggedCourses.map((c) => (
+                          <div
+                            key={`${c.term}-${c.id}`}
+                            className="honors-flagged-item"
+                          >
+                            <div className="honors-flagged-top">
+                              <span className="honors-flagged-id">{c.id}</span>
+                              <span className="honors-flagged-units">
+                                {c.units} CR
+                              </span>
+                            </div>
+                            <div className="honors-flagged-meta">
+                              <span>{c.term}</span>
+                              <span className={`honors-status-tag tag-${c.status}`}>
+                                {honorsStatusLabel(c.status)}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                  </div>
+                  <form
+                    onSubmit={addHonorsPetition}
+                    className="honors-petition-form"
+                  >
+                    <h3 className="honors-subheading">Honors petition credits</h3>
+                    <p className="honors-petition-hint">
+                      Counts toward honors experience only—not GPA or transcript
+                      credits.
+                    </p>
+                    <input
+                      type="text"
+                      className="input-field"
+                      placeholder="Description (e.g. Study abroad petition)"
+                      value={newPetition.description}
+                      onChange={(e) =>
+                        setNewPetition({
+                          ...newPetition,
+                          description: e.target.value,
+                        })}
+                      required
+                    />
+                    <div className="honors-petition-credits-row">
+                      <input
+                        type="number"
+                        className="input-field"
+                        placeholder="Credits"
+                        min="0.5"
+                        step="0.5"
+                        value={newPetition.credits}
+                        onChange={(e) =>
+                          setNewPetition({
+                            ...newPetition,
+                            credits: parseFloat(e.target.value) || 0,
+                          })}
+                        required
+                      />
+                      <button type="submit" className="btn btn-primary">
+                        Add
+                      </button>
+                    </div>
+                  </form>
+                  {honorsPetitions.length > 0 && (
+                    <ul className="honors-petition-list">
+                      {honorsPetitions.map((p) => (
+                        <li key={p.id} className="honors-petition-item">
+                          <div>
+                            <div className="honors-petition-desc">
+                              {p.description}
+                            </div>
+                            <div className="honors-petition-meta">
+                              Petition · {p.credits} CR
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="card-action-btn delete-btn"
+                            title="Remove petition"
+                            onClick={() => removeHonorsPetition(p.id)}
+                          >
+                            <X size={13} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="honors-remaining">
+                    <span className="honors-remaining-label">
+                      Honors experience to complete
+                    </span>
+                    <span className="honors-remaining-value">
+                      {honorsRemaining % 1 === 0
+                        ? honorsRemaining
+                        : honorsRemaining.toFixed(1)}{" "}
+                      credits
+                    </span>
+                  </div>
+                </>
+              )
+              : (
+                <p className="honors-disabled-hint">
+                  Turn on the tracker to flag honors courses on your flowsheet
+                  and monitor progress toward your honors experience requirement.
+                </p>
+              )}
+          </section>
         </div>
 
         {/* ── Right Column ── */}
@@ -899,14 +1176,33 @@ export default function App() {
                               course.status,
                               showFlowsheetGrades,
                             );
+                            const canFlagHonors = honorsTrackerEnabled &&
+                              courseCountsTowardHonors(course);
                             return (
                             <div
                               key={`${term}-${i}`}
                               className={[
                                 "flowsheet-card",
                                 useStatusStyle ? `fcard-${course.status}` : "",
+                                course.isHonors ? "fcard-honors" : "",
                               ].filter(Boolean).join(" ")}
                             >
+                              {canFlagHonors && (
+                                <label
+                                  className="fcard-honors-check"
+                                  title="Count toward honors experience"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={!!course.isHonors}
+                                    onChange={() =>
+                                      toggleCourseHonors(course.term, course.id)}
+                                  />
+                                  <span>Honors</span>
+                                </label>
+                              )}
                               <div className="fcard-top">
                                 <span className="fcard-id">{course.id}</span>
                                 {useStatusStyle && (
