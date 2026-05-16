@@ -130,7 +130,7 @@ export default function App() {
   }, [state]);
 
   useEffect(() => {
-    fetch("/courses.json")
+    fetch(`${import.meta.env.BASE_URL}courses.json`)
       .then((r) => r.json())
       .then((data) => setCourseOptions(data))
       .catch(console.error);
