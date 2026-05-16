@@ -1,6 +1,12 @@
-# GPAMe | UB Academic Planner & GPA Calculator
+# GPAMe | UB Unofficial Transcript Parser & GPA Calculator
 
-**GPAMe** is a modern, unofficial academic planning tool designed specifically for students at the **University at Buffalo**. It helps students visualize their academic progress, parse unofficial transcripts, and plan future semesters with ease.
+**GPAMe** is an unofficial GPA Calculator for **University at Buffalo** students. It helps students visualize their academic progress, parse unofficial transcripts, and plan future semesters with ease.
+
+### 🔒 Privacy First: Your Data Stays With You
+Privacy and security are top priorities. **No transcript data is ever transmitted, stored, or uploaded to any server.** 
+- All PDF parsing happens entirely within your web browser.
+- Your data stays on your local machine and is only persisted in your browser's local storage for your convenience.
+- You can clear your data at any time by clearing your browser's site data.
 
 ---
 
@@ -14,7 +20,7 @@
 *   **Advisor Consultation**: Please contact your **Academic Advisor** for authoritative guidance on your degree requirements and academic status.
 
 ### Ethical Intent
-The intention of this project is to provide a helpful visualization tool, **not** to create a system that could potentially misguide students. We strongly request that contributors and forks refrain from modifying this tool in a way that could jeopardize a student's scholarship, graduation timeline, or visa status. Academic success is a serious matter; use this tool as a supplement, never a replacement for official university advisement.
+The intention of this project is to provide a helpful visualization tool, **not** to create a system that could potentially misguide students. We strongly request that contributors and forks refrain from modifying this tool in a way that could jeopardize a student's scholarship, graduation timeline, or visa status. Academic success is a serious matter; use this tool as a supplement, never a replacement for official university advisement. THESE UNOFFICIAL TOOLS ARE NEVER 100% ACCURATE AS THERE ARE ALWAYS EDGE CASES TO CONSIDER. 
 
 ---
 
