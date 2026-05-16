@@ -822,7 +822,8 @@ export default function App() {
         <p>
           Developed with ❤️ by{" "}
           <a href="https://github.com/ShivanshShalabh" target="_blank" rel="noopener noreferrer">Shivansh Shalabh</a> |{" "}
-          <a href="https://www.linkedin.com/in/shivansh-shalabh/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/shivansh-shalabh/" target="_blank" rel="noopener noreferrer">LinkedIn</a> |{" "}
+          <a href="https://forms.gle/fcmcj3hYyvAKeiSb8" target="_blank" rel="noopener noreferrer">Report a Bug / Suggestion</a>
         </p>
         <div style={{ marginTop: "12px", fontSize: "0.8rem", color: "var(--text-muted)", opacity: 0.8, display: "flex", justifyContent: "center", gap: "16px" }}>
           <span>👁️ {viewCount !== null ? viewCount.toLocaleString() : "..."} Views</span>

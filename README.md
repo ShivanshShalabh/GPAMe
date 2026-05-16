@@ -6,7 +6,7 @@
 Privacy and security are top priorities. **No transcript data is ever transmitted, stored, or uploaded to any server.** 
 - All PDF parsing happens entirely within your web browser.
 - Your data stays on your local machine and is only persisted in your browser's local storage for your convenience.
-- You can clear your data at any time by clearing your browser's site data.
+- You can clear your data anytime by clicking the "Delete Data" button in the top-right menu or by clearing your browser's site data.
 
 ---
 
@@ -77,4 +77,10 @@ We welcome contributions from the community! If you'd like to help improve GPAMe
 
 ---
 
-Developed with ❤️ by [Shivansh Shalabh](https://github.com/ShivanshShalabh)
+## 📬 Feedback & Support
+
+Found a bug? Have a suggestion for a new feature? Please let us know via our [Google Form](https://forms.gle/fcmcj3hYyvAKeiSb8). Your feedback helps make GPAMe better for everyone!
+
+---
+
+Developed with ❤️ by [Shivansh Shalabh](https://github.com/ShivanshShalabh) with the help of AI
