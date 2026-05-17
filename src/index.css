@@ -293,6 +293,59 @@ body.light .disclaimer-text { color: #92400e; }
   color: var(--text-main);
   font-variant-numeric: tabular-nums;
 }
+.term-gpa-list {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+.term-gpa-heading {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.term-gpa-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.term-gpa-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+body.light .term-gpa-row { background: rgba(0, 0, 0, 0.02); }
+.term-gpa-term {
+  font-weight: 600;
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+.term-gpa-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #38bdf8;
+  text-align: right;
+}
+body.light .term-gpa-value { color: #0284c7; }
+.term-gpa-credits {
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
 
 /* ─── GPA Calculator ─────────────────────────────────────────────────────── */
 .section-hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
@@ -554,6 +607,16 @@ body.light .fcard-honors-check { color: #d97706; }
   height: 14px;
   accent-color: #f59e0b;
   cursor: pointer;
+}
+
+.fcard-gpa-excluded {
+  opacity: 0.55;
+  border-style: dashed !important;
+  filter: grayscale(0.35);
+}
+.fcard-gpa-excluded .fcard-grade {
+  text-decoration: line-through;
+  opacity: 0.85;
 }
 
 /* ─── Planned Courses Section ────────────────────────────────────────────── */
