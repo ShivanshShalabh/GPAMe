@@ -20,17 +20,16 @@ import {
   AlertTriangle,
   Award,
 } from "lucide-react";
-import * as pdfjsLib from "pdfjs-dist";
 import {
   captureFlowsheetElement,
   downloadFlowsheetExcel,
   downloadFlowsheetPdf,
   downloadFlowsheetPng,
 } from "./flowsheetExport";
-import { extractDataFromText } from "./parser";
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+import {
+  extractTranscriptFromPdf,
+  TranscriptParseError,
+} from "./pdfTranscript";
 
 interface Course {
   term: string;
@@ -202,51 +201,36 @@ export default function App() {
 
   // ── PDF Upload ──────────────────────────────────────────────────────────────
   const handleFileUpload = async (file: File) => {
-    if (file.type !== "application/pdf") {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       alert("Please upload a PDF file.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const typedarray = new Uint8Array(e.target?.result as ArrayBuffer);
-        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-        const allItems: { x: number; y: number; str: string }[] = [];
-        let pageYOffset = 0;
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1 });
-          const textContent = await page.getTextContent();
-          for (const item of textContent.items as any[]) {
-            const str = item.str?.trim();
-            if (!str) continue;
-            allItems.push({
-              x: item.transform[4],
-              y: item.transform[5] + pageYOffset,
-              str,
-            });
-          }
-          pageYOffset += viewport.height + 100;
-        }
-        const { courses } = extractDataFromText("", allItems);
-        setState((prev) => ({
-          ...prev,
-          courses: [
-            ...prev.courses.filter((c) => c.status === "planned"),
-            ...courses,
-          ],
-        }));
+    try {
+      const { courses, debug } = await extractTranscriptFromPdf(file);
+      console.info("[GPAMe] Transcript parsed successfully", debug);
+      setState((prev) => ({
+        ...prev,
+        courses: [
+          ...prev.courses.filter((c) => c.status === "planned"),
+          ...courses,
+        ],
+      }));
 
-        fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts/up")
-          .then((res) => res.json())
-          .then((data) => setUploadCount(data.data.up_count))
-          .catch(console.error);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to parse PDF.");
+      fetch("https://api.counterapi.dev/v2/shivansh-shalabhs-team-4143/gpame-transcripts/up")
+        .then((res) => res.json())
+        .then((data) => setUploadCount(data.data.up_count))
+        .catch(console.error);
+    } catch (err) {
+      console.error("[GPAMe] Transcript parse failed", err);
+      if (err instanceof TranscriptParseError) {
+        alert(err.toUserMessage());
+      } else {
+        const msg = err instanceof Error ? err.message : String(err);
+        alert(
+          `Could not parse PDF (unknown error).\n\n${msg}\n\nOpen the browser console (F12) for details.`,
+        );
       }
-    };
-    reader.readAsArrayBuffer(file);
+    }
   };
 
   // ── Planner actions ─────────────────────────────────────────────────────────
