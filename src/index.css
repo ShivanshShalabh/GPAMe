@@ -349,7 +349,27 @@ body.light .term-gpa-value { color: #0284c7; }
 
 /* ─── GPA Calculator ─────────────────────────────────────────────────────── */
 .section-hint { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px; }
-.calculator-list { display: flex; flex-direction: column; gap: 8px; }
+.calculator-list { display: flex; flex-direction: column; gap: 14px; }
+.calc-term-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.calc-term-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+}
+body.light .calc-term-header { color: #2563eb; }
+.calc-term-courses {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .calc-course-row {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 12px; background: rgba(255,255,255,0.03);

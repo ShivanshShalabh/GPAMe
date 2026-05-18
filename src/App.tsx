@@ -442,6 +442,11 @@ export default function App() {
   const ipAndPlanned = state.courses.filter(
     (c) => c.status === "planned" || c.status === "in-progress",
   );
+  const calculatorByTerm: Record<string, Course[]> = {};
+  ipAndPlanned.forEach((c) => {
+    (calculatorByTerm[c.term] = calculatorByTerm[c.term] || []).push(c);
+  });
+  const calculatorTermsSorted = sortTerms(Object.keys(calculatorByTerm));
 
   const repeatGpa = repeatGpaSummary(state.courses);
   const cumulativeGpa = gpaForCourses(state.courses);
@@ -781,41 +786,48 @@ export default function App() {
                   <p>No planned or in-progress courses.</p>
                 </div>
               ) : (
-                ipAndPlanned.map((c, idx) => (
-                  <div
-                    key={`${c.term}-${c.id}-${idx}`}
-                    className="calc-course-row"
-                  >
-                    <span className="calc-course-id">{c.id}</span>
-                    <input
-                      type="number"
-                      value={c.units}
-                      onChange={(e) =>
-                        updateCourse(c.term, c.id, {
-                          units: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className={`calc-units-input ${
-                        c.isVariable ? "variable-units" : ""
-                      }`}
-                      title="Credits"
-                      min="1"
-                      step="0.5"
-                    />
-                    <select
-                      value={c.grade || ""}
-                      onChange={(e) =>
-                        updateCourse(c.term, c.id, { grade: e.target.value })
-                      }
-                      className="calc-grade-select"
-                    >
-                      <option value="">Grade</option>
-                      {VALID_GRADES.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
+                calculatorTermsSorted.map((term) => (
+                  <div key={term} className="calc-term-group">
+                    <div className="calc-term-header">{term}</div>
+                    <div className="calc-term-courses">
+                      {calculatorByTerm[term].map((c, idx) => (
+                        <div
+                          key={`${term}-${c.id}-${idx}`}
+                          className="calc-course-row"
+                        >
+                          <span className="calc-course-id">{c.id}</span>
+                          <input
+                            type="number"
+                            value={c.units}
+                            onChange={(e) =>
+                              updateCourse(c.term, c.id, {
+                                units: parseFloat(e.target.value) || 0,
+                              })}
+                            className={`calc-units-input ${
+                              c.isVariable ? "variable-units" : ""
+                            }`}
+                            title="Credits"
+                            min="1"
+                            step="0.5"
+                          />
+                          <select
+                            value={c.grade || ""}
+                            onChange={(e) =>
+                              updateCourse(c.term, c.id, {
+                                grade: e.target.value,
+                              })}
+                            className="calc-grade-select"
+                          >
+                            <option value="">Grade</option>
+                            {VALID_GRADES.map((g) => (
+                              <option key={g} value={g}>
+                                {g}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       ))}
-                    </select>
+                    </div>
                   </div>
                 ))
               )}
