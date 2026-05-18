@@ -70,8 +70,29 @@ const DEFAULT_STATE: AppState = { courses: [] };
 const DEFAULT_HONORS_CREDITS_REQUIRED = 21;
 
 function courseCountsTowardHonors(c: Course): boolean {
+  if (c.status === "failed") return false;
+  if (c.grade && ["F", "FX", "W", "R"].includes(c.grade.toUpperCase())) return false;
   return (
     c.status === "taken" || c.status === "in-progress" || c.status === "planned"
+  );
+}
+
+function isGraduate(id: string): boolean {
+  const match = id.match(/^[A-Z]+\s*(\d{3})/i);
+  if (!match) return false;
+  const num = parseInt(match[1], 10);
+  return num >= 500;
+}
+
+function isAutoHonorsCourse(id: string): boolean {
+  const startsWithList = ["HON", "UBE 102", "CSE 199", "EAS 199", "AED 199"];
+  ["481", "482", "483", "484", "485"].forEach((i) => startsWithList.push("OPR " + i));
+  const includesList = ["496", "498", "495", "499"];
+  
+  return (
+    startsWithList.some((prefix) => id.startsWith(prefix)) ||
+    includesList.some((substring) => id.includes(substring)) ||
+    isGraduate(id)
   );
 }
 
@@ -103,6 +124,7 @@ export default function App() {
     return (localStorage.getItem("gpame_theme") as "light" | "dark") || "dark";
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHonorsEditMode, setIsHonorsEditMode] = useState(false);
 
   const [viewCount, setViewCount] = useState<number | null>(null);
   const [uploadCount, setUploadCount] = useState<number | null>(null);
@@ -286,9 +308,13 @@ export default function App() {
   const toggleCourseHonors = (term: string, id: string) => {
     setState((prev) => ({
       ...prev,
-      courses: prev.courses.map((c) =>
-        c.term === term && c.id === id ? { ...c, isHonors: !c.isHonors } : c,
-      ),
+      courses: prev.courses.map((c) => {
+        if (c.term === term && c.id === id) {
+          const currentHonors = c.isHonors !== undefined ? c.isHonors : isAutoHonorsCourse(c.id);
+          return { ...c, isHonors: !currentHonors };
+        }
+        return c;
+      }),
     }));
   };
 
@@ -455,7 +481,10 @@ export default function App() {
     state.honorsCreditsRequired ?? DEFAULT_HONORS_CREDITS_REQUIRED;
   const honorsPetitions = state.honorsPetitions ?? [];
   const honorsFlaggedCourses = state.courses
-    .filter((c) => c.isHonors && courseCountsTowardHonors(c))
+    .filter((c) => {
+      const counts = c.isHonors !== undefined ? c.isHonors : isAutoHonorsCourse(c.id);
+      return counts && courseCountsTowardHonors(c);
+    })
     .sort((a, b) => {
       const td = sortTerms([a.term, b.term]);
       if (a.term !== b.term) return td.indexOf(a.term) - td.indexOf(b.term);
@@ -918,10 +947,18 @@ export default function App() {
             </div>
             {honorsTrackerEnabled ? (
               <>
-                <p className="section-hint">
-                  Flag courses on the flowsheet. Taken, in-progress, and planned
-                  courses count toward honors experience.
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <p className="section-hint" style={{ margin: 0 }}>
+                    Flag courses on the flowsheet. Taken, in-progress, and planned
+                    courses count toward honors experience.
+                  </p>
+                  <button
+                    className={`btn ${isHonorsEditMode ? "btn-primary" : "btn-secondary"} btn-sm`}
+                    onClick={() => setIsHonorsEditMode(!isHonorsEditMode)}
+                  >
+                    {isHonorsEditMode ? "Done Editing" : "Edit Honors"}
+                  </button>
+                </div>
                 <div className="honors-credits-row">
                   <label
                     className="honors-field-label"
@@ -1261,8 +1298,10 @@ export default function App() {
                             course.status,
                             showFlowsheetGrades,
                           );
+                          const countsAsHonors = course.isHonors !== undefined ? course.isHonors : isAutoHonorsCourse(course.id);
                           const canFlagHonors =
                             honorsTrackerEnabled &&
+                            isHonorsEditMode &&
                             courseCountsTowardHonors(course);
                           const gpaExcluded = isExcludedFromGpa(
                             course,
@@ -1274,7 +1313,7 @@ export default function App() {
                               className={[
                                 "flowsheet-card",
                                 useStatusStyle ? `fcard-${course.status}` : "",
-                                course.isHonors ? "fcard-honors" : "",
+                                countsAsHonors && courseCountsTowardHonors(course) ? "fcard-honors" : "",
                                 gpaExcluded ? "fcard-gpa-excluded" : "",
                               ]
                                 .filter(Boolean)
@@ -1294,7 +1333,7 @@ export default function App() {
                                 >
                                   <input
                                     type="checkbox"
-                                    checked={!!course.isHonors}
+                                    checked={!!countsAsHonors}
                                     onChange={() =>
                                       toggleCourseHonors(course.term, course.id)
                                     }
