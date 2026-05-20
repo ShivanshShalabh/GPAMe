@@ -1,4 +1,4 @@
-# GPAMe | UB Unofficial Transcript Parser & GPA Calculator
+# [GPAMe]([url](https://shivanshshalabh.github.io/GPAMe/)) | UB Unofficial Transcript Parser & GPA Calculator
 
 **GPAMe** is an unofficial GPA Calculator for **University at Buffalo** students. It helps students visualize their academic progress, parse unofficial transcripts, and plan future semesters with ease.
 
