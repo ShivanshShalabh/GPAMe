@@ -241,6 +241,7 @@ function extractFromPositioned(
 
   const seen = new Set<string>();
   const all: Course[] = [];
+  let globalLastTerm = "";
 
   for (const pageItems of pages) {
     const split = detectColumnSplit(pageItems);
@@ -250,8 +251,9 @@ function extractFromPositioned(
     const leftRows = groupColRows(leftItems);
     const rightRows = groupColRows(rightItems);
 
-    const { courses: leftCourses, lastTerm } = parseColumn(leftRows);
-    const { courses: rightCourses } = parseColumn(rightRows, lastTerm);
+    const { courses: leftCourses, lastTerm: leftTerm } = parseColumn(leftRows, globalLastTerm);
+    const { courses: rightCourses, lastTerm: rightTerm } = parseColumn(rightRows, leftTerm);
+    globalLastTerm = rightTerm;
 
     for (const course of [...leftCourses, ...rightCourses]) {
       const key = `${course.term}||${course.id}`;

@@ -1325,7 +1325,7 @@ export default function App() {
                               className={[
                                 "flowsheet-card",
                                 useStatusStyle ? `fcard-${course.status}` : "",
-                                countsAsHonors && courseCountsTowardHonors(course) ? "fcard-honors" : "",
+                                honorsTrackerEnabled && countsAsHonors && courseCountsTowardHonors(course) ? "fcard-honors" : "",
                                 gpaExcluded ? "fcard-gpa-excluded" : "",
                               ]
                                 .filter(Boolean)

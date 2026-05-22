@@ -177,7 +177,7 @@ export async function extractTranscriptFromPdf(
 
       columnSplits.push(detectColumnSplit(pageItems));
       allItems.push(...pageItems);
-      pageYOffset += viewport.height + 100;
+      pageYOffset -= viewport.height + 100;
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
